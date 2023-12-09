@@ -13,105 +13,58 @@ fn _open_file_and_return_lines(filepath: String) -> Vec<String> {
     lines // Return the lines vector
 }
 
-struct Map {
-    dest: u64,
-    source: u64,
-    len: u64,
-}
-
-impl Map {
-    fn new(dest: u64, source: u64, len: u64) -> Map {
-        Map {
-            dest: dest,
-            source: source,
-            len: len,
-        }
-    }
-
-    fn get_dest(&self, source: u64) -> Result<u64, i32> {
-        if source >= self.source && source < self.source + self.len {
-            return Ok(self.dest + (source - self.source));
-        }
-        Err(-1)
-    }
-}
-
-fn get_dest(map: &Vec<Map>, source: u64) -> u64 {
-    for m in map.iter() {
-        if let Ok(dest) = m.get_dest(source) {
-            return dest;
-        }
-    }
-    source
-}
-
 fn main() {
     // pass first argument to function
     let lines = _open_file_and_return_lines(std::env::args().nth(1).unwrap());
-    let mut seeds = Vec::new();
-    let mut seed_to_soil: Vec<Map> = Vec::new();
-    let mut soil_to_fertilizer: Vec<Map> = Vec::new();
-    let mut fertilizer_to_water: Vec<Map> = Vec::new();
-    let mut water_to_light: Vec<Map> = Vec::new();
-    let mut light_to_temperature: Vec<Map> = Vec::new();
-    let mut temperature_to_humidity: Vec<Map> = Vec::new();
-    let mut humidity_to_location: Vec<Map> = Vec::new();
-    let mut fillvec: &mut Vec<Map> = &mut seed_to_soil;
-    for line in lines.iter() {
-        if line.starts_with("seeds:") {
-            for s in line[6..].to_string().trim().split(" ") {
-                seeds.push(s.parse::<u64>().unwrap());
-            }
-        } else if line.starts_with("seed-to-soil map:") {
-            fillvec = &mut seed_to_soil;
-        } else if line.starts_with("soil-to-fertilizer map:") {
-            fillvec = &mut soil_to_fertilizer;
-        } else if line.starts_with("fertilizer-to-water map:") {
-            fillvec = &mut fertilizer_to_water;
-        } else if line.starts_with("water-to-light map:") {
-            fillvec = &mut water_to_light;
-        } else if line.starts_with("light-to-temperature map:") {
-            fillvec = &mut light_to_temperature;
-        } else if line.starts_with("temperature-to-humidity map:") {
-            fillvec = &mut temperature_to_humidity;
-        } else if line.starts_with("humidity-to-location map:") {
-            fillvec = &mut humidity_to_location;
-        } else if line.is_empty() {
-            continue;
-        } else {
-            let mut split = line.split(" ");
-            fillvec.push(Map::new(
-                split.next().unwrap().parse::<u64>().unwrap(),
-                split.next().unwrap().parse::<u64>().unwrap(),
-                split.next().unwrap().parse::<u64>().unwrap(),
-            ));
+    let mut time_list = Vec::new();
+    let mut distance_list = Vec::new();
+    let mut games: Vec<(u64, u64)> = Vec::new();
+    let mut iter = lines.iter();
+    iter.next()
+        .unwrap()
+        .split_whitespace()
+        .skip(1)
+        .for_each(|x| time_list.push(x));
+    iter.next()
+        .unwrap()
+        .split_whitespace()
+        .skip(1)
+        .for_each(|x| distance_list.push(x));
+
+    // #[cfg(part2)]
+    {
+        let time_str = time_list.join("");
+        let distance_str = distance_list.join("");
+        println!("{} {}", time_str, distance_str);
+        games.push((
+            time_list.join("").parse().unwrap(),
+            distance_list.join("").parse().unwrap(),
+        ))
+    }
+    #[cfg(part1)]
+    {
+        for i in time_list.iter().zip(distance_list.iter()) {
+            let (time, distance) = i;
+            games.push((time.parse().unwrap(), distance.parse().unwrap()));
         }
     }
 
-    let mut min_location: u64 = 9999999999999999;
-    let mut start: u64 = 0;
-    seeds.into_iter().for_each(|seed| {
-        if start == 0 {
-            start = seed;
-            println!("seed: {}", seed);
+    let mut total = 1;
+    for (time, distance) in games.iter() {
+        let mid_point = (*time as f64) / 2.0;
+        let range = (((time * time) - (4 * distance)) as f64).sqrt();
+        let low = (mid_point - (range / 2.0)).floor();
+        let high = (mid_point + (range / 2.0)).floor();
+        let adjustment = if (low as u64 * time) - (low as u64 * low as u64) == *distance {
+            1
         } else {
-            println!("looping: {}", seed);
-            for s in start..(start + seed) {
-                let soil = get_dest(&seed_to_soil, s);
-                let fertilizer = get_dest(&soil_to_fertilizer, soil);
-                let water = get_dest(&fertilizer_to_water, fertilizer);
-                let light = get_dest(&water_to_light, water);
-                let temperature = get_dest(&light_to_temperature, light);
-                let humidity = get_dest(&temperature_to_humidity, temperature);
-                let location = get_dest(&humidity_to_location, humidity);
-                if location < min_location {
-                    min_location = location;
-                }
-            }
-            start = 0;
-            println!("min location: {}", min_location)
-        }
-    });
+            0
+        };
+        println!("{} {} {} {}", mid_point, range, low, high);
 
-    println!("done, min location: {}", min_location)
+        let rounded_range = (high - low) as u64 - adjustment;
+        println!("{} {} {}", time, distance, rounded_range);
+        total *= rounded_range;
+    }
+    println!("{}", total);
 }
