@@ -17,7 +17,6 @@ fn _open_file_and_return_lines(filepath: String) -> Vec<String> {
 fn main() {
     // pass first argument to function
     let lines = _open_file_and_return_lines(std::env::args().nth(1).unwrap());
-    let mut total: u64 = 0;
 
     let direction = lines[0]
         .chars()
@@ -36,15 +35,23 @@ fn main() {
         map.insert(loc, dest_tuple);
     }
 
-    let mut whereami = "AAA";
-    for i in direction.iter().cycle() {
-        total += 1;
-        let dest = &map[whereami][*i];
-        if dest == "ZZZ" {
-            break;
+    let mut whereamis: Vec<&String> = map.keys().filter(|k| k.ends_with("A")).collect();
+    let mut totals: Vec<u64> = Vec::new();
+    for w in whereamis {
+        let mut whereami = w;
+        let mut total: u64 = 0;
+        println!("start: {}", whereami);
+        for i in direction.iter().cycle() {
+            total += 1;
+            let dest: &String = &map[whereami][*i];
+            if dest.ends_with('Z') {
+                break;
+            }
+            whereami = dest;
         }
-        whereami = dest;
+        println!("total: {}", total);
+        totals.push(total);
     }
 
-    println!("{}", total);
+    println!("{}", totals.iter().fold(1, |acc, x| acc * x));
 }
