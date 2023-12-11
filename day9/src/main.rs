@@ -51,8 +51,8 @@ fn main() {
             .split(" ")
             .map(|x| x.parse::<i64>().unwrap())
             .collect::<Vec<i64>>();
-        let next_value = _find_next_value(&sequence);
-        let last_number = sequence[sequence.len() - 1] + next_value;
+        let prev_value = _find_prev_value(&sequence);
+        let last_number = sequence[0] - prev_value;
         println!("{}", last_number);
         last_numbers.push(last_number);
     }
