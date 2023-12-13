@@ -16,36 +16,31 @@ fn _open_file_and_return_lines(filepath: String) -> Vec<String> {
 fn main() {
     // pass first argument to function
     let lines = _open_file_and_return_lines(std::env::args().nth(1).unwrap());
+    let expansion: u64 = 1000000;
 
-    // expand all dot rows and columns
-    let mut expanded_lines: Vec<String> = Vec::new();
-    for i in lines.into_iter() {
-        if i.chars().all(|c| c == '.') {
-            expanded_lines.push(i.clone());
+    let mut empty_y: Vec<usize> = Vec::new();
+    for i in 0..lines.len() {
+        if lines[i].chars().all(|c| c == '.') {
+            empty_y.push(i);
         }
-        expanded_lines.push(i);
     }
 
-    let mut i: usize = 0;
-    while i < expanded_lines[0].len() {
-        if expanded_lines
+    let mut empty_x: Vec<usize> = Vec::new();
+    for i in 0..lines[0].len() {
+        if lines
             .iter()
             .map(|x| x.chars().nth(i).unwrap())
             .all(|c| c == '.')
         {
-            for j in 0..expanded_lines.len() {
-                expanded_lines[j].insert(i, '.');
-            }
-            i += 1;
+            empty_x.push(i);
         }
-        i += 1;
     }
 
     // detect position of all #
     let mut positions: Vec<(usize, usize)> = Vec::new();
-    for y in 0..expanded_lines.len() {
-        for x in 0..expanded_lines[y].len() {
-            if expanded_lines[y].chars().nth(x).unwrap() == '#' {
+    for y in 0..lines.len() {
+        for x in 0..lines[y].len() {
+            if lines[y].chars().nth(x).unwrap() == '#' {
                 positions.push((x, y));
             }
         }
@@ -57,7 +52,24 @@ fn main() {
         for j in i + 1..positions.len() {
             let (x1, y1) = positions[i];
             let (x2, y2) = positions[j];
-            sum += ((x1 as i64 - x2 as i64).abs() + (y1 as i64 - y2 as i64).abs()) as u64;
+
+            let min_x = x1.min(x2);
+            let max_x = x1.max(x2);
+            let empty_x_num: u64 = empty_x
+                .iter()
+                .filter(|x| **x > min_x && **x < max_x)
+                .count() as u64;
+
+            let min_y = y1.min(y2);
+            let max_y = y1.max(y2);
+            let empty_y_num: u64 = empty_y
+                .iter()
+                .filter(|y| **y > min_y && **y < max_y)
+                .count() as u64;
+
+            sum += ((max_x - min_x) as u64 + (empty_x_num * (expansion - 1)))
+                + (max_y - min_y) as u64
+                + (empty_y_num * (expansion - 1));
         }
     }
 
